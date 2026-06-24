@@ -36,11 +36,35 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
   const [dragDropPlacement, setDragDropPlacement] = useState<Record<string, string>>({});
   const [isPlacementComplete, setIsPlacementComplete] = useState(false);
 
-  // Reset placement on index change
+  // Shuffled options state
+  const [shuffledOptions, setShuffledOptions] = useState<{ originalIndex: number; text: string }[]>([]);
+  const [currentShuffledQuestionId, setCurrentShuffledQuestionId] = useState<string>('');
+
+  // Reset placement on index change and shuffle options
   React.useEffect(() => {
     setDragDropPlacement({});
     setIsPlacementComplete(false);
-  }, [currentIndex]);
+
+    const question = questions[currentIndex];
+    if (question) {
+      if (question.options) {
+        const mapped = question.options.map((option, idx) => ({
+          originalIndex: idx,
+          text: option
+        }));
+        // Fisher-Yates shuffle
+        const shuffled = [...mapped];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setShuffledOptions(shuffled);
+      } else {
+        setShuffledOptions([]);
+      }
+      setCurrentShuffledQuestionId(question.id);
+    }
+  }, [currentIndex, questions]);
 
   if (questions.length === 0) {
     return (
@@ -62,6 +86,12 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
 
   const currentQuestion = questions[currentIndex];
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
+
+  // Determine options to render (original unshuffled fallback if state is updating, shuffled otherwise)
+  const isShuffledOptionsValid = currentQuestion && currentShuffledQuestionId === currentQuestion.id;
+  const renderedOptions = isShuffledOptionsValid
+    ? shuffledOptions
+    : (currentQuestion?.options || []).map((option, idx) => ({ originalIndex: idx, text: option }));
 
   const handleOptionClick = (optionIndex: number) => {
     if (isAnswered) return;
@@ -216,9 +246,9 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
           <div className="space-y-3">
             <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">選択肢</span>
             
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = selectedOption === index;
-              const isCorrectAnswer = currentQuestion.correctAnswerIndex === index;
+            {renderedOptions.map((shuffledOpt, index) => {
+              const isSelected = selectedOption === shuffledOpt.originalIndex;
+              const isCorrectAnswer = currentQuestion.correctAnswerIndex === shuffledOpt.originalIndex;
 
               let optionStyle = "border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer";
               if (isSelected) {
@@ -236,9 +266,9 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
 
               return (
                 <button
-                  key={index}
+                  key={shuffledOpt.originalIndex}
                   disabled={isAnswered}
-                  onClick={() => handleOptionClick(index)}
+                  onClick={() => handleOptionClick(shuffledOpt.originalIndex)}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3 text-sm leading-relaxed ${optionStyle}`}
                 >
                   {/* Visual choice indicator */}
@@ -254,7 +284,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
                     {String.fromCharCode(65 + index)} {/* A, B, C... */}
                   </span>
                   
-                  <span className="flex-1">{option}</span>
+                  <span className="flex-1">{shuffledOpt.text}</span>
 
                   {/* Status icon helper */}
                   {isAnswered && isCorrectAnswer && (

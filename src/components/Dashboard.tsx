@@ -378,16 +378,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </p>
           </div>
           
-          {stats.totalAnswered > 0 && (
-            <button
-              id="reset_stats_btn"
-              onClick={onResetStats}
-              className="text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-100 hover:border-rose-100 bg-slate-50/50 hover:bg-rose-50/20 cursor-pointer"
-            >
-              <RefreshCw className="w-3 h-3" />
-              データをクリアする
-            </button>
-          )}
+          <button
+            id="reset_stats_btn"
+            onClick={onResetStats}
+            className="text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-150 hover:border-rose-100 bg-white hover:bg-rose-50/20 cursor-pointer shadow-2xs"
+          >
+            <RefreshCw className="w-3 h-3" />
+            アプリ初期化 (データをリセット)
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

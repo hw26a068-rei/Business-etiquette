@@ -9,7 +9,9 @@ import {
   GraduationCap, 
   Layers, 
   Sparkles,
-  Info
+  Info,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'manner_game_stats_v1';
@@ -52,6 +54,7 @@ export default function App() {
     isCorrect: boolean;
     dragDropPlacement?: Record<string, string>;
   }[]>([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Load stats from local storage on mount
   useEffect(() => {
@@ -161,14 +164,21 @@ export default function App() {
 
   // Reset statistics handler
   const handleResetStats = () => {
-    if (window.confirm('これまでの学習データをすべてリセットしますか？この操作は取り消せません。')) {
-      setStats(defaultStats);
-      try {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-      } catch (e) {
-        console.error('Error clearing localStorage', e);
-      }
+    setShowResetConfirm(true);
+  };
+
+  // Safe execution of stats and state reset (start from beginning)
+  const executeResetStats = () => {
+    setStats(defaultStats);
+    setView('dashboard');
+    setCurrentQuiz(null);
+    setUserAnswers([]);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (e) {
+      console.error('Error clearing localStorage', e);
     }
+    setShowResetConfirm(false);
   };
 
   // Inject beautiful practice data so that user can instantly see graphs
@@ -311,6 +321,48 @@ export default function App() {
           <p>© 2026 社会人マナー学習ゲーム PRO. 全ての実践に裏付けられたビジネススキルを。</p>
         </div>
       </footer>
+
+      {/* Custom Confirmation Modal for resetting stats and starting from beginning */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 relative z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="space-y-2 flex-1">
+                <h3 className="text-lg font-bold text-slate-900 font-sans">学習データの初期化</h3>
+                <p className="text-sm text-slate-500 leading-relaxed font-sans">
+                  これまでの学習データ（総合進捗サマリー、学習継続傾向、各ジャンルの正答率・回答履歴など）がすべて完全に削除され、最初からスタートになります。
+                </p>
+                <div className="text-xs font-bold text-rose-600 bg-rose-50/50 p-3 rounded-lg border border-rose-100/50">
+                  ※この操作は取り消せません。本当に初期化しますか？
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                id="cancel_reset_btn"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                id="confirm_reset_btn"
+                onClick={executeResetStats}
+                className="px-4 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5 animate-spin-reverse" style={{ animationDuration: '3s' }} />
+                完全に初期化する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

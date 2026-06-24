@@ -1,0 +1,6 @@
+{
+  "name": "社会人マナー学習ゲーム",
+  "description": "オフィスカジュアルを意識した清潔感のあるUIで、名刺交換、席次（タクシー・飲み会・会議室）、テーブルマナー、言葉遣い・敬語などのビジネスマナーをクイズ形式で学べるシチュエーションゲーム。カテゴリー別特訓モードやランダム特訓モード、学習の進捗グラフ可視化機能を搭載しています。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

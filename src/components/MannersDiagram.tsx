@@ -93,6 +93,10 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
     e.stopPropagation();
     if (isAnswered) return;
 
+    // Play click sound
+    const audio = new Audio('/クリック.wav');
+    audio.play().catch(err => console.error('Failed to play sound:', err));
+
     if (selectedItemId === itemId) {
       // Toggle selection off
       setSelectedItemId(null);
@@ -105,9 +109,13 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
     if (isAnswered) return;
 
     if (selectedItemId) {
-      // Place selected item here
+      // Place selected item here (this will play the drag-and-drop sound)
       handlePlace(selectedItemId, slotId);
     } else if (placement[slotId]) {
+      // Play click sound when selecting an already placed item
+      const audio = new Audio('/クリック.wav');
+      audio.play().catch(err => console.error('Failed to play sound:', err));
+
       // Clicked a filled slot - select the item to move or allow removal
       setSelectedItemId(placement[slotId]);
     }

@@ -3,6 +3,45 @@ import { DiagramType, DragDropConfig, DragDropItem, DragDropSlot } from '../type
 import { Check, X, RotateCcw, Info, User, HelpCircle, CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
+const getCharacterIllustration = (item: { id: string; name: string; role: string }) => {
+  const idLower = item.id.toLowerCase();
+  const nameLower = item.name.toLowerCase();
+  const roleLower = item.role.toLowerCase();
+
+  // 自分 / 平社員（自分）
+  if (idLower === 'me' || nameLower.includes('自分') || roleLower.includes('自分') || roleLower.includes('平社員') || roleLower.includes('若手')) {
+    return '/キャラクター素材_0000_レイヤー-2.png';
+  }
+  // 上司（自社社長・自社上司・部長・課長・社長等）
+  if (idLower === 'director' || idLower === 'manager' || nameLower.includes('上司') || nameLower.includes('部長') || nameLower.includes('課長') || nameLower.includes('社長') || roleLower.includes('上司') || roleLower.includes('部長') || roleLower.includes('課長') || roleLower.includes('社長')) {
+    // ただし取引先社長は除く（下の条件で捕まえる、あるいはここで除外）
+    if (!nameLower.includes('取引先')) {
+      return '/キャラクター素材_0001_レイヤー-3.png';
+    }
+  }
+  // 来客（相手企業の社長・取引先・ゲスト等）
+  if (idLower === 'president' || idLower === 'guest' || nameLower.includes('取引先') || nameLower.includes('客') || nameLower.includes('お客様') || nameLower.includes('来客') || roleLower.includes('客') || roleLower.includes('お客様') || roleLower.includes('ゲスト') || roleLower.includes('主賓') || roleLower.includes('社長')) {
+    return '/キャラクター素材_0002_レイヤー-4.png';
+  }
+
+  return null;
+};
+
+const renderAvatar = (item: { id: string; name: string; role: string; avatar: string }, sizeClass: string = "w-6 h-6") => {
+  const imgSrc = getCharacterIllustration(item);
+  if (imgSrc) {
+    return (
+      <img
+        src={imgSrc}
+        alt={item.name}
+        className={`${sizeClass} object-contain rounded-full bg-slate-100/50 border border-slate-200/50`}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+  return <span className={sizeClass === "w-6 h-6" ? "text-sm" : "text-base"}>{item.avatar}</span>;
+};
+
 interface MannersDiagramProps {
   type?: DiagramType;
   selectedAnswerIndex?: number | null;
@@ -204,8 +243,8 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
         }`}
         title={isAnswered ? '' : 'クリックでベンチに戻す'}
       >
-        <div className="flex items-center gap-1">
-          <span className="text-sm">{item.avatar}</span>
+        <div className="flex items-center gap-1.5">
+          {renderAvatar(item, "w-5 h-5")}
           <span className="text-[11px] font-extrabold text-slate-900 truncate">{item.name}</span>
         </div>
         <span className="text-[8px] text-slate-500 font-semibold truncate leading-none mt-0.5">{item.role}</span>
@@ -294,7 +333,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                         : 'hover:scale-[1.02]'
                     }`}
                   >
-                    <span className="text-base">{item.avatar}</span>
+                    {renderAvatar(item, "w-6 h-6")}
                     <div className="text-left">
                       <p className="text-xs font-extrabold leading-none">{item.name}</p>
                       <p className="text-[8px] text-slate-500 leading-none mt-0.5 font-medium">{item.role}</p>
@@ -894,27 +933,91 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
       {/* Answer Legend / Helper during quiz review */}
       {isAnswered && (
-        <div className="w-full bg-slate-100/50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 font-sans leading-relaxed space-y-1.5">
-          <p className="font-extrabold text-slate-800 flex items-center gap-1 text-[11px] border-b border-slate-200 pb-1 mb-1">
-            <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
-            <span>正しい配置ルール（模範解答）</span>
+        <div className="w-full bg-white border border-slate-200 rounded-xl p-4 text-xs font-sans shadow-2xs space-y-3.5">
+          <p className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs border-b border-slate-100 pb-2">
+            <HelpCircle className="w-4 h-4 text-slate-500" />
+            <span>【答えの比較】あなたの配置 vs 正しい配置</span>
           </p>
-          <div className="grid grid-cols-1 gap-1">
-            {dragDropConfig.slots.map((slot, index) => {
-              const correctItem = dragDropConfig.items.find(item => item.id === slot.correctItemId);
-              return (
-                <div key={slot.id} className="flex items-center gap-1 text-[11px]">
-                  <span className="font-bold text-slate-500">・{slot.name} ({slot.rankLabel}):</span>
-                  {correctItem ? (
-                    <span className="font-extrabold text-slate-800">
-                      {correctItem.avatar} {correctItem.name} ({correctItem.role})
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 font-semibold">（空席 / 不要）</span>
-                  )}
-                </div>
-              );
-            })}
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[320px]">
+              <thead>
+                <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                  <th className="py-2 px-2">席の位置・役割</th>
+                  <th className="py-2 px-2">あなたの配置</th>
+                  <th className="py-2 px-2">正しい配置</th>
+                  <th className="py-2 px-1 text-center">判定</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {dragDropConfig.slots.map((slot) => {
+                  const userPlacedItemId = placement[slot.id] || '';
+                  const userPlacedItem = dragDropConfig.items.find(item => item.id === userPlacedItemId);
+                  const correctItem = dragDropConfig.items.find(item => item.id === slot.correctItemId);
+                  const isCorrect = userPlacedItemId === slot.correctItemId;
+
+                  return (
+                    <tr key={slot.id} className={`transition-colors hover:bg-slate-50/30 ${!isCorrect ? 'bg-rose-50/10' : ''}`}>
+                      {/* Slot info */}
+                      <td className="py-2.5 px-2 font-semibold text-slate-700">
+                        <div className="flex flex-col">
+                          <span>{slot.name}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">({slot.rankLabel})</span>
+                        </div>
+                      </td>
+
+                      {/* User placed item */}
+                      <td className="py-2.5 px-2">
+                        {userPlacedItem ? (
+                          <span className={`inline-flex items-center gap-1.5 font-bold ${!isCorrect ? 'text-rose-600' : 'text-slate-700'}`}>
+                            {renderAvatar(userPlacedItem, "w-5 h-5")}
+                            <span>{userPlacedItem.name}</span>
+                            <span className="text-[10px] font-normal text-slate-500">({userPlacedItem.role})</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">（空席）</span>
+                        )}
+                      </td>
+
+                      {/* Correct item */}
+                      <td className="py-2.5 px-2">
+                        {correctItem ? (
+                          <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
+                            {renderAvatar(correctItem, "w-5 h-5")}
+                            <span>{correctItem.name}</span>
+                            <span className="text-[10px] font-normal text-slate-500">({correctItem.role})</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-semibold">（空席）</span>
+                        )}
+                      </td>
+
+                      {/* Verdict */}
+                      <td className="py-2.5 px-1 text-center">
+                        {isCorrect ? (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold" title="正解">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold" title="間違い">
+                            ✗
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Correct seating sequence helper description */}
+          <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 space-y-1 bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
+            <span className="font-extrabold text-slate-700 block mb-0.5">💡 配置ルールのおさらい</span>
+            <p className="leading-normal">
+              最も格式の高い席（上座・席次第1位）から順に、主賓や目上の人が座ります。
+              自分や自社メンバー（下座・最下位）は最も入り口に近い席、または操作盤（エレベーターの場合）や乗降口（タクシーの場合）の前に配置するのが基本的なマナーです。
+            </p>
           </div>
         </div>
       )}

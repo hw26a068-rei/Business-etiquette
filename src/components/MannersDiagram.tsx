@@ -12,16 +12,24 @@ const getCharacterIllustration = (item: { id: string; name: string; role: string
   if (idLower === 'me' || nameLower.includes('自分') || roleLower.includes('自分') || roleLower.includes('平社員') || roleLower.includes('若手')) {
     return '/キャラクター素材_0000_レイヤー-2.png';
   }
-  // 上司（自社社長・自社上司・部長・課長・社長等）
-  if (idLower === 'director' || idLower === 'manager' || nameLower.includes('上司') || nameLower.includes('部長') || nameLower.includes('課長') || nameLower.includes('社長') || roleLower.includes('上司') || roleLower.includes('部長') || roleLower.includes('課長') || roleLower.includes('社長')) {
-    // ただし取引先社長は除く（下の条件で捕まえる、あるいはここで除外）
+
+  // 来客（相手企業の社長・取引先・ゲスト等）
+  if (idLower === 'president' || idLower === 'guest' || nameLower.includes('取引先') || nameLower.includes('客') || nameLower.includes('お客様') || nameLower.includes('来客') || roleLower.includes('客') || roleLower.includes('お客様') || roleLower.includes('ゲスト') || roleLower.includes('主賓')) {
+    if (!nameLower.includes('自社')) {
+      return '/キャラクター素材_0002_レイヤー-4.png';
+    }
+  }
+
+  // 自社部長
+  if (idLower === 'director' || nameLower.includes('部長') || roleLower.includes('部長')) {
+    return '/キャラ素材（部長）_0000_レイヤー-1.png';
+  }
+
+  // 自社課長 / 上司 / 社長（自社社長 / 自社上司）
+  if (idLower === 'manager' || nameLower.includes('課長') || roleLower.includes('課長') || nameLower.includes('上司') || nameLower.includes('社長') || roleLower.includes('上司') || roleLower.includes('社長')) {
     if (!nameLower.includes('取引先')) {
       return '/キャラクター素材_0001_レイヤー-3.png';
     }
-  }
-  // 来客（相手企業の社長・取引先・ゲスト等）
-  if (idLower === 'president' || idLower === 'guest' || nameLower.includes('取引先') || nameLower.includes('客') || nameLower.includes('お客様') || nameLower.includes('来客') || roleLower.includes('客') || roleLower.includes('お客様') || roleLower.includes('ゲスト') || roleLower.includes('主賓') || roleLower.includes('社長')) {
-    return '/キャラクター素材_0002_レイヤー-4.png';
   }
 
   return null;

@@ -21,7 +21,7 @@ const playClickSound = () => {
   audio.play().catch(err => console.error('Failed to play sound:', err));
 };
 
-const defaultStats: UserStats = {
+const createDefaultStats = (): UserStats => ({
   totalSessions: 0,
   totalAnswered: 0,
   totalCorrect: 0,
@@ -33,7 +33,7 @@ const defaultStats: UserStats = {
     visit: { answered: 0, correct: 0 }
   },
   history: []
-};
+});
 
 // Simple array shuffler
 function shuffleArray<T>(array: T[]): T[] {
@@ -46,7 +46,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export default function App() {
-  const [stats, setStats] = useState<UserStats>(defaultStats);
+  const [stats, setStats] = useState<UserStats>(createDefaultStats());
   const [view, setView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
   const [currentQuiz, setCurrentQuiz] = useState<{
     mode: 'category' | 'random';
@@ -69,16 +69,24 @@ export default function App() {
         const parsed = JSON.parse(saved);
         // Clean fallback validation to ensure shape safety
         if (parsed && typeof parsed.totalSessions === 'number') {
-          setStats(parsed);
+          const mergedStats = {
+            ...createDefaultStats(),
+            ...parsed,
+            categoryStats: {
+              ...createDefaultStats().categoryStats,
+              ...(parsed.categoryStats || {})
+            }
+          };
+          setStats(mergedStats);
         } else {
-          setStats(defaultStats);
+          setStats(createDefaultStats());
         }
       } else {
-        setStats(defaultStats);
+        setStats(createDefaultStats());
       }
     } catch (e) {
       console.error('Error loading stats', e);
-      setStats(defaultStats);
+      setStats(createDefaultStats());
     }
   }, []);
 
@@ -115,9 +123,17 @@ export default function App() {
 
     setUserAnswers(answers);
     
-    // Calculate new stats
-    const updatedStats = { ...stats };
-    updatedStats.totalSessions += 1;
+    // Calculate new stats with deep copying
+    const updatedStats: UserStats = {
+      ...stats,
+      totalSessions: stats.totalSessions + 1,
+      categoryStats: Object.keys(stats.categoryStats).reduce((acc, key) => {
+        const k = key as CategoryId;
+        acc[k] = { ...stats.categoryStats[k] };
+        return acc;
+      }, {} as Record<CategoryId, { answered: number; correct: number }>),
+      history: [...stats.history]
+    };
     
     let sessionCorrect = 0;
     
@@ -177,7 +193,7 @@ export default function App() {
   // Safe execution of stats and state reset (start from beginning)
   const executeResetStats = () => {
     playClickSound();
-    setStats(defaultStats);
+    setStats(createDefaultStats());
     setView('dashboard');
     setCurrentQuiz(null);
     setUserAnswers([]);

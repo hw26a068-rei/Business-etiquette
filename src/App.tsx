@@ -16,6 +16,11 @@ import {
 
 const LOCAL_STORAGE_KEY = 'manner_game_stats_v1';
 
+const playClickSound = () => {
+  const audio = new Audio('/クリック.wav');
+  audio.play().catch(err => console.error('Failed to play sound:', err));
+};
+
 const defaultStats: UserStats = {
   totalSessions: 0,
   totalAnswered: 0,
@@ -79,6 +84,7 @@ export default function App() {
 
   // Handler to start a quiz
   const handleStartQuiz = (mode: 'category' | 'random', categoryId?: CategoryId) => {
+    playClickSound();
     let quizQuestions: Question[] = [];
     let label = '';
 
@@ -164,11 +170,13 @@ export default function App() {
 
   // Reset statistics handler
   const handleResetStats = () => {
+    playClickSound();
     setShowResetConfirm(true);
   };
 
   // Safe execution of stats and state reset (start from beginning)
   const executeResetStats = () => {
+    playClickSound();
     setStats(defaultStats);
     setView('dashboard');
     setCurrentQuiz(null);
@@ -183,6 +191,7 @@ export default function App() {
 
   // Inject beautiful practice data so that user can instantly see graphs
   const handleInjectDemoData = () => {
+    playClickSound();
     const today = new Date();
     const getPastDateStr = (daysAgo: number) => {
       const d = new Date();
@@ -220,6 +229,7 @@ export default function App() {
   };
 
   const handleRestartQuiz = () => {
+    playClickSound();
     if (!currentQuiz) return;
     
     // Re-shuffle if it was random mode
@@ -238,6 +248,7 @@ export default function App() {
   };
 
   const handleGoHome = () => {
+    playClickSound();
     setCurrentQuiz(null);
     setUserAnswers([]);
     setView('dashboard');
@@ -345,7 +356,10 @@ export default function App() {
               <button
                 type="button"
                 id="cancel_reset_btn"
-                onClick={() => setShowResetConfirm(false)}
+                onClick={() => {
+                  playClickSound();
+                  setShowResetConfirm(false);
+                }}
                 className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
               >
                 キャンセル

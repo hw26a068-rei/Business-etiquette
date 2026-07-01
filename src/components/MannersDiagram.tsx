@@ -64,6 +64,10 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
     updatePlacement(newPlacement);
     setSelectedItemId(null); // Clear selection after placing
+
+    // Play drag-and-drop placement sound effect
+    const audio = new Audio('/ドラックアンドドロップ.wav');
+    audio.play().catch(err => console.error('Failed to play sound:', err));
   };
 
   const handleRemove = (slotId: string) => {
@@ -76,6 +80,11 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
   const handleReset = () => {
     if (isAnswered) return;
+
+    // Play click sound
+    const audio = new Audio('/クリック.wav');
+    audio.play().catch(err => console.error('Failed to play sound:', err));
+
     updatePlacement({});
     setSelectedItemId(null);
   };

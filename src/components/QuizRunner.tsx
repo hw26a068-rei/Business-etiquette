@@ -96,6 +96,10 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
   const handleOptionClick = (optionIndex: number) => {
     if (isAnswered) return;
     setSelectedOption(optionIndex);
+    
+    // Play option selection sound effect
+    const audio = new Audio('/選択肢.wav');
+    audio.play().catch(err => console.error('Failed to play sound:', err));
   };
 
   const handlePlacementChange = (newPlacement: Record<string, string>, isComplete: boolean) => {
@@ -134,9 +138,18 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
     };
 
     setUserAnswers(prev => [...prev, newAnswer]);
+
+    // Play correct or incorrect sound effect
+    const audioFile = isCorrect ? '/正解.wav' : '/間違い.wav';
+    const audio = new Audio(audioFile);
+    audio.play().catch(err => console.error('Failed to play sound:', err));
   };
 
   const handleNextQuestion = () => {
+    // Play next button/results click sound
+    const clickAudio = new Audio('/クリック.wav');
+    clickAudio.play().catch(err => console.error('Failed to play sound:', err));
+
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(prev => prev + 1);
       setSelectedOption(null);

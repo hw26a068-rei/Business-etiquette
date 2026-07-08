@@ -4,47 +4,30 @@ import { Check, X, RotateCcw, Info, User, HelpCircle, CornerDownRight } from 'lu
 import { motion } from 'motion/react';
 
 const getCharacterIllustration = (item: { id: string; name: string; role: string }) => {
-  const idLower = item.id.toLowerCase();
-  const nameLower = item.name.toLowerCase();
-  const roleLower = item.role.toLowerCase();
-
-  // 自分 / 平社員（自分）
-  if (idLower === 'me' || nameLower.includes('自分') || roleLower.includes('自分') || roleLower.includes('平社員') || roleLower.includes('若手')) {
-    return '/キャラクター素材_0000_レイヤー-2.png';
-  }
-
-  // 来客（相手企業の社長・取引先・ゲスト等）
-  if (idLower === 'president' || idLower === 'guest' || nameLower.includes('取引先') || nameLower.includes('客') || nameLower.includes('お客様') || nameLower.includes('来客') || roleLower.includes('客') || roleLower.includes('お客様') || roleLower.includes('ゲスト') || roleLower.includes('主賓')) {
-    if (!nameLower.includes('自社')) {
-      return '/キャラクター素材_0002_レイヤー-4.png';
-    }
-  }
-
-  // 自社部長
-  if (idLower === 'director' || nameLower.includes('部長') || roleLower.includes('部長')) {
-    return '/キャラ素材（部長）_0000_レイヤー-1.png';
-  }
-
-  // 自社課長 / 上司 / 社長（自社社長 / 自社上司）
-  if (idLower === 'manager' || nameLower.includes('課長') || roleLower.includes('課長') || nameLower.includes('上司') || nameLower.includes('社長') || roleLower.includes('上司') || roleLower.includes('社長')) {
-    if (!nameLower.includes('取引先')) {
-      return '/キャラクター素材_0001_レイヤー-3.png';
-    }
-  }
-
   return null;
 };
 
 const renderAvatar = (item: { id: string; name: string; role: string; avatar: string }, sizeClass: string = "w-6 h-6") => {
   const imgSrc = getCharacterIllustration(item);
   if (imgSrc) {
+    const idLower = item.id.toLowerCase();
+    const nameLower = item.name.toLowerCase();
+    const roleLower = item.role.toLowerCase();
+    const isDirector = idLower === 'director' || nameLower.includes('部長') || roleLower.includes('部長');
+
     return (
-      <img
-        src={imgSrc}
-        alt={item.name}
-        className={`${sizeClass} object-contain rounded-full bg-slate-100/50 border border-slate-200/50`}
-        referrerPolicy="no-referrer"
-      />
+      <div className={`${sizeClass} rounded-full overflow-hidden bg-white border border-slate-200 flex items-center justify-center relative shadow-xs shrink-0`}>
+        <img
+          src={imgSrc}
+          alt={item.name}
+          className={`absolute max-w-none object-cover object-top transition-transform duration-300 hover:scale-105 ${
+            isDirector 
+              ? 'w-[90%] h-[90%] top-[2.5%]' 
+              : 'w-[95%] h-[95%] top-[2%]'
+          }`}
+          referrerPolicy="no-referrer"
+        />
+      </div>
     );
   }
   return <span className={sizeClass === "w-6 h-6" ? "text-sm" : "text-base"}>{item.avatar}</span>;
@@ -244,26 +227,26 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
           e.stopPropagation();
           handleRemove(slotId);
         }}
-        className={`w-full h-full p-1.5 rounded-lg border flex flex-col items-center justify-center text-center cursor-pointer select-none transition-all ${item.colorClass} ${
-          isSlotCorrect ? 'ring-3 ring-emerald-500 ring-offset-1 bg-emerald-50/90 border-emerald-400' : ''
+        className={`w-full h-full p-1 rounded-xl border flex flex-col items-center justify-center text-center cursor-pointer select-none transition-all relative ${item.colorClass} ${
+          isSlotCorrect ? 'ring-3 ring-emerald-500 ring-offset-1 bg-emerald-50/95 border-emerald-400' : ''
         } ${
-          isSlotIncorrect ? 'ring-3 ring-rose-500 ring-offset-1 bg-rose-50/90 border-rose-300' : ''
+          isSlotIncorrect ? 'ring-3 ring-rose-500 ring-offset-1 bg-rose-50/95 border-rose-300' : ''
         }`}
         title={isAnswered ? '' : 'クリックでベンチに戻す'}
       >
-        <div className="flex items-center gap-1.5">
-          {renderAvatar(item, "w-5 h-5")}
-          <span className="text-[11px] font-extrabold text-slate-900 truncate">{item.name}</span>
+        <div className="flex flex-col items-center justify-center leading-none">
+          {renderAvatar(item, "w-10 h-10")}
+          <span className="text-[10px] font-extrabold text-slate-900 truncate max-w-[95px] mt-1">{item.name}</span>
         </div>
-        <span className="text-[8px] text-slate-500 font-semibold truncate leading-none mt-0.5">{item.role}</span>
+        <span className="text-[8px] text-slate-500 font-bold truncate max-w-[95px] leading-none mt-0.5">{item.role}</span>
         
         {/* Answer verification icons overlay */}
         {isAnswered && (
-          <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white shadow-xs">
+          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white shadow-xs z-20">
             {isSlotCorrect ? (
-              <div className="bg-emerald-600 rounded-full p-0.5"><Check className="w-2.5 h-2.5 stroke-[3]" /></div>
+              <div className="bg-emerald-600 rounded-full p-0.5"><Check className="w-3 h-3 stroke-[3]" /></div>
             ) : (
-              <div className="bg-rose-600 rounded-full p-0.5"><X className="w-2.5 h-2.5 stroke-[3]" /></div>
+              <div className="bg-rose-600 rounded-full p-0.5"><X className="w-3 h-3 stroke-[3]" /></div>
             )}
           </div>
         )}
@@ -335,16 +318,16 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       e.dataTransfer.setData('text/plain', item.id);
                     }}
                     onClick={(e) => handleItemClick(item.id, e)}
-                    className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none shadow-2xs ${item.colorClass} ${
+                    className={`px-3.5 py-2 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all select-none shadow-xs ${item.colorClass} ${
                       isSelected 
-                        ? 'ring-3 ring-slate-800 ring-offset-1 border-slate-800 scale-105 font-semibold animate-pulse' 
-                        : 'hover:scale-[1.02]'
+                        ? 'ring-3 ring-slate-800 ring-offset-1 border-slate-800 scale-105 font-bold animate-pulse' 
+                        : 'hover:scale-[1.03] hover:shadow-md'
                     }`}
                   >
-                    {renderAvatar(item, "w-6 h-6")}
+                    {renderAvatar(item, "w-12 h-12")}
                     <div className="text-left">
-                      <p className="text-xs font-extrabold leading-none">{item.name}</p>
-                      <p className="text-[8px] text-slate-500 leading-none mt-0.5 font-medium">{item.role}</p>
+                      <p className="text-sm font-extrabold leading-tight text-slate-800">{item.name}</p>
+                      <p className="text-[10px] text-slate-500 font-bold mt-0.5">{item.role}</p>
                     </div>
                   </motion.div>
                 );
@@ -361,7 +344,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
         
         {/* 1. TAXI DIAGRAM */}
         {dragDropConfig.backgroundType === 'taxi' && (
-          <div className="relative w-full max-w-sm aspect-video bg-slate-100/50 border-4 border-slate-300 rounded-[32px] p-4 flex flex-col justify-between shadow-inner">
+          <div className="relative w-full max-w-sm aspect-[4/3] md:aspect-video bg-slate-100/50 border-4 border-slate-300 rounded-[32px] p-4 flex flex-col justify-between shadow-inner">
             {/* Front windshield line */}
             <div className="absolute top-1/3 left-0 right-0 border-t border-dashed border-slate-300"></div>
             
@@ -379,7 +362,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-28 h-14 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-28 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div className="p-1">
@@ -396,7 +379,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
               })()}
 
               {/* Front Right: Static occupied Driver seat */}
-              <div className="w-24 h-14 bg-slate-200 border border-slate-300/80 rounded-xl flex flex-col items-center justify-center text-center shadow-3xs text-slate-500 font-sans">
+              <div className="w-24 h-18 bg-slate-200 border border-slate-300/80 rounded-xl flex flex-col items-center justify-center text-center shadow-3xs text-slate-500 font-sans">
                 <div className="flex items-center gap-1 leading-none">
                   <span className="text-xs">👔</span>
                   <span className="text-xs font-bold text-slate-700">運転席</span>
@@ -419,7 +402,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative flex-1 h-14 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative flex-1 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div className="p-1">
@@ -447,7 +430,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative flex-1 h-14 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative flex-1 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div className="p-1">
@@ -475,7 +458,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative flex-1 h-14 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative flex-1 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div className="p-1">
@@ -498,7 +481,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
         {/* 2. ROUND TABLE / ZASHIKI DIAGRAM */}
         {dragDropConfig.backgroundType === 'round_table' && (
-          <div className="relative w-full max-w-sm h-52 bg-amber-50/20 border-2 border-amber-900/10 rounded-2xl p-4 flex flex-col items-center justify-between shadow-xs">
+          <div className="relative w-full max-w-sm h-[260px] bg-amber-50/20 border-2 border-amber-900/10 rounded-2xl p-4 flex flex-col items-center justify-between shadow-xs">
             
             {/* Top Seat: Farthest from entry (Kamiza) */}
             {(() => {
@@ -512,7 +495,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                     const itemId = e.dataTransfer.getData('text/plain');
                     handlePlace(itemId, slot.id);
                   }}
-                  className={`relative w-36 h-12 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
+                  className={`relative w-36 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
                 >
                   {!placedItemId ? (
                     <div>
@@ -544,7 +527,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-24 h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-24 h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -581,7 +564,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-24 h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-24 h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -612,7 +595,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-36 h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-36 h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all z-10 ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -640,7 +623,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
         {/* 3. MEETING ROOM DIAGRAM */}
         {dragDropConfig.backgroundType === 'meeting_room' && (
-          <div className="relative w-full max-w-sm h-56 bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
+          <div className="relative w-full max-w-sm h-[270px] bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
             
             {/* Top Display Area (Windshield/Whiteboard style) */}
             <div className="flex justify-between items-center w-full px-2">
@@ -671,7 +654,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                         const itemId = e.dataTransfer.getData('text/plain');
                         handlePlace(itemId, slot.id);
                       }}
-                      className={`relative h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                      className={`relative h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                     >
                       {!placedItemId ? (
                         <div>
@@ -699,7 +682,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                         const itemId = e.dataTransfer.getData('text/plain');
                         handlePlace(itemId, slot.id);
                       }}
-                      className={`relative h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                      className={`relative h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                     >
                       {!placedItemId ? (
                         <div>
@@ -717,7 +700,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
               </div>
 
               {/* Central Wood Table */}
-              <div className="flex-1 h-24 bg-amber-50/50 border border-amber-200 rounded-lg flex flex-col items-center justify-center text-center shadow-inner select-none">
+              <div className="flex-1 h-34 bg-amber-50/50 border border-amber-200 rounded-lg flex flex-col items-center justify-center text-center shadow-inner select-none">
                 <span className="text-[10px] font-extrabold text-amber-900/60 font-sans">会議長机</span>
                 <span className="text-[7px] text-slate-400 mt-1 font-bold">資料等</span>
               </div>
@@ -736,7 +719,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                         const itemId = e.dataTransfer.getData('text/plain');
                         handlePlace(itemId, slot.id);
                       }}
-                      className={`relative h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                      className={`relative h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                     >
                       {!placedItemId ? (
                         <div>
@@ -764,7 +747,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                         const itemId = e.dataTransfer.getData('text/plain');
                         handlePlace(itemId, slot.id);
                       }}
-                      className={`relative h-11 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                      className={`relative h-16 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                     >
                       {!placedItemId ? (
                         <div>
@@ -793,7 +776,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
 
         {/* 4. ELEVATOR DIAGRAM */}
         {dragDropConfig.backgroundType === 'elevator' && (
-          <div className="relative w-full max-w-xs aspect-square bg-slate-100 border-2 border-slate-350 rounded-2xl p-4 flex flex-col justify-between shadow-inner">
+          <div className="relative w-full max-w-xs h-[300px] bg-slate-100 border-2 border-slate-350 rounded-2xl p-4 flex flex-col justify-between shadow-inner">
             
             {/* Back row spots */}
             <div className="flex justify-between items-center w-full px-1">
@@ -809,7 +792,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-28 h-12 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-28 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -837,7 +820,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-28 h-12 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-28 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -875,7 +858,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-28 h-12 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-28 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -903,7 +886,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       const itemId = e.dataTransfer.getData('text/plain');
                       handlePlace(itemId, slot.id);
                     }}
-                    className={`relative w-28 h-12 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
+                    className={`relative w-28 h-18 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${getSlotFeedbackStyle(slot)}`}
                   >
                     {!placedItemId ? (
                       <div>
@@ -977,10 +960,12 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       {/* User placed item */}
                       <td className="py-2.5 px-2">
                         {userPlacedItem ? (
-                          <span className={`inline-flex items-center gap-1.5 font-bold ${!isCorrect ? 'text-rose-600' : 'text-slate-700'}`}>
-                            {renderAvatar(userPlacedItem, "w-5 h-5")}
-                            <span>{userPlacedItem.name}</span>
-                            <span className="text-[10px] font-normal text-slate-500">({userPlacedItem.role})</span>
+                          <span className={`inline-flex items-center gap-2 font-bold ${!isCorrect ? 'text-rose-600' : 'text-slate-700'}`}>
+                            {renderAvatar(userPlacedItem, "w-8 h-8")}
+                            <div className="flex flex-col justify-center leading-tight">
+                              <span>{userPlacedItem.name}</span>
+                              <span className="text-[9px] font-normal text-slate-500 mt-0.5">{userPlacedItem.role}</span>
+                            </div>
                           </span>
                         ) : (
                           <span className="text-slate-400 font-medium">（空席）</span>
@@ -990,10 +975,12 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
                       {/* Correct item */}
                       <td className="py-2.5 px-2">
                         {correctItem ? (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
-                            {renderAvatar(correctItem, "w-5 h-5")}
-                            <span>{correctItem.name}</span>
-                            <span className="text-[10px] font-normal text-slate-500">({correctItem.role})</span>
+                          <span className="inline-flex items-center gap-2 font-bold text-slate-800">
+                            {renderAvatar(correctItem, "w-8 h-8")}
+                            <div className="flex flex-col justify-center leading-tight">
+                              <span>{correctItem.name}</span>
+                              <span className="text-[9px] font-normal text-slate-500 mt-0.5">{correctItem.role}</span>
+                            </div>
                           </span>
                         ) : (
                           <span className="text-slate-400 font-semibold">（空席）</span>

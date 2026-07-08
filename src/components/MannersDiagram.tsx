@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DiagramType, DragDropConfig, DragDropItem, DragDropSlot } from '../types';
 import { Check, X, RotateCcw, Info, User, HelpCircle, CornerDownRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { playSe } from '../utils/sound';
 
 const getCharacterIllustration = (item: { id: string; name: string; role: string }) => {
   return null;
@@ -96,8 +97,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
     setSelectedItemId(null); // Clear selection after placing
 
     // Play drag-and-drop placement sound effect
-    const audio = new Audio('/ドラックアンドドロップ.wav');
-    audio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe('/ドラックアンドドロップ.wav');
   };
 
   const handleRemove = (slotId: string) => {
@@ -112,8 +112,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
     if (isAnswered) return;
 
     // Play click sound
-    const audio = new Audio('/クリック.wav');
-    audio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe('/クリック.wav');
 
     updatePlacement({});
     setSelectedItemId(null);
@@ -124,8 +123,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
     if (isAnswered) return;
 
     // Play click sound
-    const audio = new Audio('/クリック.wav');
-    audio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe('/クリック.wav');
 
     if (selectedItemId === itemId) {
       // Toggle selection off
@@ -143,8 +141,7 @@ export const MannersDiagram: React.FC<MannersDiagramProps> = ({
       handlePlace(selectedItemId, slotId);
     } else if (placement[slotId]) {
       // Play click sound when selecting an already placed item
-      const audio = new Audio('/クリック.wav');
-      audio.play().catch(err => console.error('Failed to play sound:', err));
+      playSe('/クリック.wav');
 
       // Clicked a filled slot - select the item to move or allow removal
       setSelectedItemId(placement[slotId]);

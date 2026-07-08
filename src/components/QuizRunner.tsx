@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Question, CategoryId } from '../types';
 import { MannersDiagram } from './MannersDiagram';
+import { playSe } from '../utils/sound';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -98,8 +99,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
     setSelectedOption(optionIndex);
     
     // Play option selection sound effect
-    const audio = new Audio('/選択肢.wav');
-    audio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe('/選択肢.wav');
   };
 
   const handlePlacementChange = (newPlacement: Record<string, string>, isComplete: boolean) => {
@@ -141,14 +141,12 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({
 
     // Play correct or incorrect sound effect
     const audioFile = isCorrect ? '/正解.wav' : '/間違い.wav';
-    const audio = new Audio(audioFile);
-    audio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe(audioFile);
   };
 
   const handleNextQuestion = () => {
     // Play next button/results click sound
-    const clickAudio = new Audio('/クリック.wav');
-    clickAudio.play().catch(err => console.error('Failed to play sound:', err));
+    playSe('/クリック.wav');
 
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(prev => prev + 1);

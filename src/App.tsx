@@ -1,25 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { UserStats, CategoryId, Question } from './types';
 import { CATEGORIES, QUESTIONS } from './data/questions';
 import { Dashboard } from './components/Dashboard';
 import { QuizRunner } from './components/QuizRunner';
 import { ReviewList } from './components/ReviewList';
 import { 
-  Briefcase, 
   GraduationCap, 
   Layers, 
   Sparkles,
   Info,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  Volume1
 } from 'lucide-react';
+import { playClickSound, playSe } from './utils/sound';
 
 const LOCAL_STORAGE_KEY = 'manner_game_stats_v1';
-
-const playClickSound = () => {
-  const audio = new Audio('/クリック.wav');
-  audio.play().catch(err => console.error('Failed to play sound:', err));
-};
 
 const createDefaultStats = (): UserStats => ({
   totalSessions: 0,
@@ -48,6 +46,180 @@ function shuffleArray<T>(array: T[]): T[] {
 export default function App() {
   const [stats, setStats] = useState<UserStats>(createDefaultStats());
   const [view, setView] = useState<'dashboard' | 'quiz' | 'review'>('dashboard');
+  const [bgmVolume, setBgmVolume] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('manner_game_bgm_volume');
+      return saved !== null ? parseFloat(saved) : 0.2;
+    } catch {
+      return 0.2;
+    }
+  });
+
+  const [seVolume, setSeVolumeState] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('manner_game_se_volume');
+      return saved !== null ? parseFloat(saved) : 0.5;
+    } catch {
+      return 0.5;
+    }
+  });
+
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const decodedBufferRef = useRef<AudioBuffer | null>(null);
+
+  // Expose SE volume to the window so other components can access it dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).mannerGameSeVolume = seVolume;
+    }
+    try {
+      localStorage.setItem('manner_game_se_volume', String(seVolume));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [seVolume]);
+
+  // Initialize and handle BGM using Web Audio API for seamless looping
+  useEffect(() => {
+    let active = true;
+    let audioCtx: AudioContext | null = null;
+
+    const initWebAudio = async () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) throw new Error("Web Audio API not supported");
+
+        audioCtx = new AudioContextClass();
+        audioContextRef.current = audioCtx;
+
+        const response = await fetch('/ゲーム試作プロジェクト.mp3');
+        if (!response.ok) throw new Error("Failed to fetch BGM file");
+        const arrayBuffer = await response.arrayBuffer();
+        const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+        if (!active) return;
+        decodedBufferRef.current = decodedBuffer;
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(bgmVolume, audioCtx.currentTime);
+        gainNode.connect(audioCtx.destination);
+        gainNodeRef.current = gainNode;
+
+        const playBGM = () => {
+          if (!decodedBufferRef.current || !audioCtx) return;
+          if (sourceNodeRef.current) {
+            try { sourceNodeRef.current.stop(); } catch (e) {}
+          }
+
+          const source = audioCtx.createBufferSource();
+          source.buffer = decodedBufferRef.current;
+          source.loop = true;
+          source.connect(gainNode);
+          source.start(0);
+          sourceNodeRef.current = source;
+        };
+
+        playBGM();
+
+        // Resume AudioContext on user interaction if suspended
+        const handleGesture = () => {
+          if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => {
+              playBGM();
+            }).catch(err => console.log('AudioContext resume failed:', err));
+          } else {
+            playBGM();
+          }
+          window.removeEventListener('click', handleGesture);
+          window.removeEventListener('keydown', handleGesture);
+        };
+
+        if (audioCtx.state === 'suspended') {
+          window.addEventListener('click', handleGesture);
+          window.addEventListener('keydown', handleGesture);
+        }
+      } catch (err) {
+        console.warn('Web Audio API initialization failed, falling back to standard HTML5 Audio:', err);
+        if (!active) return;
+
+        // Fallback to HTML5 Audio element
+        const fallbackAudio = new Audio('/ゲーム試作プロジェクト.mp3');
+        fallbackAudio.loop = true;
+        fallbackAudio.volume = bgmVolume;
+        bgmRef.current = fallbackAudio;
+
+        const startPlay = () => {
+          if (fallbackAudio && bgmVolume > 0) {
+            fallbackAudio.play().catch(e => console.log('Autoplay blocked:', e));
+          }
+          window.removeEventListener('click', startPlay);
+          window.removeEventListener('keydown', startPlay);
+        };
+
+        window.addEventListener('click', startPlay);
+        window.addEventListener('keydown', startPlay);
+
+        if (bgmVolume > 0) {
+          fallbackAudio.play().catch(() => {});
+        }
+      }
+    };
+
+    initWebAudio();
+
+    return () => {
+      active = false;
+      if (sourceNodeRef.current) {
+        try { sourceNodeRef.current.stop(); } catch (e) {}
+      }
+      if (audioContextRef.current) {
+        try { audioContextRef.current.close(); } catch (e) {}
+      }
+      if (bgmRef.current) {
+        bgmRef.current.pause();
+        bgmRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update volume and mute status dynamically with smooth fade effects
+  useEffect(() => {
+    const targetVolume = bgmVolume;
+
+    // Web Audio API smooth transition
+    if (audioContextRef.current && gainNodeRef.current) {
+      const ctx = audioContextRef.current;
+      try {
+        gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, ctx.currentTime);
+        gainNodeRef.current.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + 0.15);
+        
+        if (targetVolume > 0 && ctx.state === 'suspended') {
+          ctx.resume().catch(e => console.log(e));
+        }
+      } catch (e) {
+        console.warn('Failed to update gain smoothly:', e);
+        gainNodeRef.current.gain.value = targetVolume;
+      }
+    }
+
+    // Fallback HTML5 Audio update
+    if (bgmRef.current) {
+      bgmRef.current.volume = targetVolume;
+      bgmRef.current.muted = targetVolume === 0;
+      if (targetVolume > 0) {
+        bgmRef.current.play().catch(e => console.log(e));
+      }
+    }
+
+    try {
+      localStorage.setItem('manner_game_bgm_volume', String(bgmVolume));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [bgmVolume]);
   const [currentQuiz, setCurrentQuiz] = useState<{
     mode: 'category' | 'random';
     questions: Question[];
@@ -276,15 +448,9 @@ export default function App() {
       <header className="bg-slate-900 text-white shadow-md border-b border-slate-800 shrink-0">
         <div className="max-w-6xl mx-auto px-4 py-4 md:py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-amber-400 shadow-sm">
-              <Briefcase className="w-5.5 h-5.5" />
-            </div>
             <div>
               <h1 className="text-base md:text-lg font-extrabold tracking-tight flex items-center gap-1.5 font-sans">
                 社会人マナー学習ゲーム
-                <span className="text-[10px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded font-extrabold uppercase">
-                  PRO
-                </span>
               </h1>
               <p className="text-[10px] text-slate-400 hidden md:block">
                 信頼されるプロフェッショナルになるための、シチュエーション式マナートレーニング
@@ -292,10 +458,71 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 font-medium">
-              オフィスカジュアル・スタイル
-            </span>
+          <div className="flex items-center gap-4 bg-slate-950/60 p-2 sm:py-1.5 sm:px-3 rounded-xl border-2 border-blue-500/85 text-xs">
+            {/* BGM Volume */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setBgmVolume(prev => (prev > 0 ? 0 : 0.2));
+                }}
+                className="hover:text-white transition-colors cursor-pointer shrink-0"
+                title={bgmVolume === 0 ? 'BGMをON' : 'BGMをミュート'}
+              >
+                {bgmVolume === 0 ? (
+                  <VolumeX className="w-4 h-4 text-rose-400" />
+                ) : bgmVolume < 0.1 ? (
+                  <Volume1 className="w-4 h-4 text-emerald-400/70" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
+                )}
+              </button>
+              <span className="font-semibold text-slate-400 text-[10px] sm:text-xs min-w-[28px]">BGM</span>
+              <input
+                type="range"
+                min="0"
+                max="0.5"
+                step="0.05"
+                value={bgmVolume}
+                onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
+                className="w-16 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400 hover:accent-emerald-300 transition-all focus:outline-none"
+              />
+              <span className="w-7 text-right font-mono text-[10px] text-slate-500">{Math.round((bgmVolume / 0.5) * 100)}%</span>
+            </div>
+
+            <div className="hidden sm:block w-px h-5 bg-slate-800" />
+
+            {/* SE Volume */}
+            <div className="flex items-center gap-2 border-t border-slate-850/50 sm:border-t-0 pt-1.5 sm:pt-0">
+              <button
+                onClick={() => {
+                  const newVol = seVolume > 0 ? 0 : 0.5;
+                  setSeVolumeState(newVol);
+                  playSe('/クリック.wav');
+                }}
+                className="hover:text-white transition-colors cursor-pointer shrink-0"
+                title={seVolume === 0 ? '効果音をON' : '効果音をミュート'}
+              >
+                {seVolume === 0 ? (
+                  <VolumeX className="w-4 h-4 text-rose-400" />
+                ) : seVolume < 0.25 ? (
+                  <Volume1 className="w-4 h-4 text-sky-400/70" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-sky-400" />
+                )}
+              </button>
+              <span className="font-semibold text-slate-400 text-[10px] sm:text-xs min-w-[28px]">効果音</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={seVolume}
+                onChange={(e) => setSeVolumeState(parseFloat(e.target.value))}
+                className="w-16 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400 hover:accent-sky-300 transition-all focus:outline-none"
+              />
+              <span className="w-7 text-right font-mono text-[10px] text-slate-500">{Math.round(seVolume * 100)}%</span>
+            </div>
           </div>
         </div>
       </header>
